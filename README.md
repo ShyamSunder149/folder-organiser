@@ -4,8 +4,10 @@ duplicate entries
 
 As of now this is being done by checking the extension of the file.
 
-Todo : 
+Todo :
+- [x] fix bugs
 - [ ] refactor
 - [ ] categorise files by analysing the meta data 
 - [ ] delete duplicate files 
 - [ ] show duplicate files to user and ask them whether they want to delete or not
+- [ ] Improve time complexity
