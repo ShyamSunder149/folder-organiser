@@ -3,6 +3,7 @@ from pyfiglet import figlet_format
 import os
 import filetype
 import hashlib
+import exiftool
 
 # Start of the Script
 
@@ -10,37 +11,24 @@ cprint(figlet_format('Folder Cleaner', font='starwars'), attrs=['bold'])
 print("[+] Starting to clean folders...")
 parent_path = os.getcwd();
 
-# Folder creation part
-
-print("[+] Creating folders...")
-folder_names = ["audio", "video", "images", "docs", "code", "misc"]
-for folder_name in folder_names :
-    folder_creating_path = parent_path + "/" + folder_name
-    if not os.path.isdir(folder_creating_path) : 
-        os.mkdir(folder_creating_path)
-
 # taking a list of all files in the current dir
 
 files = []
+folder_names = set()
 for path in os.listdir(parent_path):
     if os.path.isfile(os.path.join(parent_path, path)):
         files.append(path)
-        
-# Code Snippet to get the category of the file based on its extension
-
-CATEGORIES = {
-    "audio": ["mp3", "wav", "flac", "aac", "ogg"],
-    "video": ["mp4", "avi", "mkv", "mov", "webm", "flv"],
-    "images": ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "svg"],
-    "code": ["py", "js", "html", "css", "cpp", "java", "rb", "php", "go"],
-    "docs": ["pdf", "docx", "txt", "pptx", "xlsx"]
-}
 
 def get_category(file_extension):
-    for category, extensions in CATEGORIES.items():
-        if file_extension in extensions:
-            return category
-    return "misc" 
+    print(f"file ext : {file_extension}")
+    with exiftool.ExifToolHelper() as et:
+        try : 
+            metadata = et.get_metadata(file_extension, params=['-m'])
+            return metadata[0]["File:MIMEType"].split('/')[0]
+        except exiftool.exceptions.ExifToolExecuteError as e:
+            print(f"ExifTool error: {e}")
+            print("STDOUT:", e.stdout)
+            print("STDERR:", e.stderr)
 
 # organising files
 print(files)
@@ -50,7 +38,18 @@ for file in files :
         filetype_str = file.split(".")[-1]
     else : 
         filefiletype_strtype = kind.extension
-    category = get_category(filetype_str.lower())
+    print(file)
+    category = get_category(os.getcwd() + "/" + file)
+    folder_names.add(category)
+    
+    # create folder for the category is the category is not present
+
+    folder_creating_path = parent_path + "/" + category
+    if not os.path.isdir(folder_creating_path) : 
+        print(f"[+] Creating {category} folder...")
+        os.mkdir(folder_creating_path)
+    
+    print(f"[+] Moving {file} to {category} folder...")
     os.replace(os.getcwd() + "/" + file, os.getcwd() + "/" + category + "/" + file)
 
 # deleting duplicate files code
@@ -95,5 +94,3 @@ for folder_name in folder_names :
 # final print
 
 print("[+] Done With moving files")
-        
-     
